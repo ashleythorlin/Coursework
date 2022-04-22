@@ -1,0 +1,194 @@
+     1                                  ;================================================================================================================================
+     2                                  ;
+     3                                  ;	Name: Ashley Thorlin
+     4                                  ;	Class/Section: CPSC 240-01
+     5                                  ;	Email: ashleythorlin@csu.fullerton.edu
+     6                                  ;	Program Name: Heron's Area
+     7                                  ;
+     8                                  ;================================================================================================================================
+     9                                  
+    10                                  ;external functions
+    11                                  extern printf
+    12                                  extern scanf
+    13                                  extern isfloat
+    14                                  extern atof
+    15                                  
+    16                                  global benchmark
+    17                                  
+    18                                  ;================================================================================================================================
+    19                                  
+    20                                  section .data
+    21                                  
+    22 00000000 57656C636F6D652074-     	welcome db "Welcome to SSE bench marking program.", 10, 0
+    22 00000009 6F205353452062656E-
+    22 00000012 6368206D61726B696E-
+    22 0000001B 672070726F6772616D-
+    22 00000024 2E0A00             
+    23 00000027 506C6561736520656E-         promptrate db "Please enter the rate (m/sec): ", 0 
+    23 00000030 746572207468652072-
+    23 00000039 61746520286D2F7365-
+    23 00000042 63293A2000         
+    24 00000047 506C6561736520656E-     	prompttime db "Please enter the time duration (seconds): ", 0
+    24 00000050 746572207468652074-
+    24 00000059 696D65206475726174-
+    24 00000062 696F6E20287365636F-
+    24 0000006B 6E6473293A2000     
+    25                                  
+    26 00000072 546865206469737461-         outputdistance db "The distance traveled was %.3lf meters.", 10, 0
+    26 0000007B 6E6365207472617665-
+    26 00000084 6C6564207761732025-
+    26 0000008D 2E336C66206D657465-
+    26 00000096 72732E0A00         
+    27                                  
+    28 0000009B 257300                      stringformat db "%s", 0
+    29 0000009E 256C6600                    floatformat db "%lf",0
+    30                                  
+    31                                  ;================================================================================================================================
+    32                                  
+    33                                  section .bss
+    34                                  
+    35 00000000 <res 00000010>              array: resq 2   ;will hold the side input              
+    36                                  
+    37                                  ;================================================================================================================================
+    38                                  
+    39                                  section .text
+    40                                  
+    41                                  benchmark:
+    42                                  
+    43                                  ; Back up registers
+    44 00000000 55                          push rbp
+    45 00000001 4889E5                      mov rbp, rsp
+    46 00000004 57                          push rdi
+    47 00000005 56                          push rsi
+    48 00000006 52                          push rdx
+    49 00000007 51                          push rcx
+    50 00000008 4150                        push r8
+    51 0000000A 4151                        push r9
+    52 0000000C 4152                        push r10
+    53 0000000E 4153                        push r11
+    54 00000010 4154                        push r12
+    55 00000012 4155                        push r13
+    56 00000014 4156                        push r14
+    57 00000016 4157                        push r15
+    58 00000018 53                          push rbx
+    59 00000019 9C                          pushf
+    60                                  
+    61 0000001A 6A00                        push qword 0
+    62                                  	
+    63 0000001C 41BC00000000            	mov r12, 0                 ;counter for loop
+    64                                  
+    65                                  	;print welcome
+    66 00000022 B800000000              	mov rax, 0
+    67 00000027 48BF-                   	mov rdi, stringformat
+    67 00000029 [9B00000000000000] 
+    68 00000031 48BE-                   	mov rsi, welcome			;"Welcome to SSE bench marking program."
+    68 00000033 [0000000000000000] 
+    69 0000003B E8(00000000)            	call printf
+    70                                  
+    71                                  	;print prompt for rate
+    72 00000040 B800000000              	mov rax, 0
+    73 00000045 48BF-                   	mov rdi, stringformat       
+    73 00000047 [9B00000000000000] 
+    74 0000004F 48BE-                   	mov rsi, promptrate			;"Please enter the rate (m/sec): "
+    74 00000051 [2700000000000000] 
+    75 00000059 E8(00000000)            	call printf                 
+    76                                  
+    77                                  	;get rate from user
+    78 0000005E 6AFF                    	push qword -1
+    79 00000060 B800000000              	mov rax, 0
+    80 00000065 48BF-                   	mov rdi, floatformat
+    80 00000067 [9E00000000000000] 
+    81 0000006F 4889E6                  	mov rsi, rsp
+    82 00000072 B800000000              	mov rax, 0
+    83 00000077 E8(00000000)            	call scanf
+    84                                  
+    85                                  	;convert string to float
+    86 0000007C B801000000                  mov rax, 1
+    87 00000081 E8(00000000)                call atof                  ;call atof to convert ascii to float
+    88                                  
+    89 00000086 4983C401                	add r12, 1                 ;increment counter
+    90                                  
+    91                                  	;put valid input in array
+    92 0000008A 66420FD604E5-               movq [array + 8 * (r12 - 1)], xmm0    ;copy atof output to array
+    92 00000090 [F8FFFFFF]         
+    93 00000094 F2460F583CE5-               addsd xmm15, [array + 8 * (r12 - 1)]  ;add output to xmm15
+    93 0000009A [F8FFFFFF]         
+    94                                  	
+    95                                  
+    96                                  	;print prompt for time
+    97 0000009E B800000000              	mov rax, 0
+    98 000000A3 48BF-                   	mov rdi, stringformat       
+    98 000000A5 [9B00000000000000] 
+    99 000000AD 48BE-                   	mov rsi, prompttime		;"Please enter the time duration (seconds): "
+    99 000000AF [4700000000000000] 
+   100 000000B7 E8(00000000)            	call printf 
+   101                                  
+   102                                  	;get time from user
+   103 000000BC 6AFF                    	push qword -1
+   104 000000BE B800000000              	mov rax, 0
+   105 000000C3 48BF-                   	mov rdi, floatformat
+   105 000000C5 [9E00000000000000] 
+   106 000000CD 4889E6                  	mov rsi, rsp
+   107 000000D0 B800000000              mov rax, 0	
+   108 000000D5 E8(00000000)            	call scanf
+   109                                  	
+   110                                  	;convert string to float
+   111 000000DA B801000000                  mov rax, 1
+   112 000000DF E8(00000000)                call atof                  ;call atof to convert ascii to float
+   113                                  
+   114 000000E4 4983C401                	add r12, 1                 ;increment counter
+   115                                  
+   116                                  	;put valid input in array
+   117 000000E8 66420FD604E5-               movq [array + 8 * (r12 - 1)], xmm0    ;copy atof output to array
+   117 000000EE [F8FFFFFF]         
+   118                                  
+   119                                  
+   120                                  	
+   121 000000F2 6A00                        push qword 0
+   122                                  
+   123                                  
+   124                                  ;calculate area
+   125                                  
+   126 000000F4 F2440F102C25-               movsd xmm13, [array]            
+   126 000000FA [00000000]         
+   127                                  
+   128 000000FE F2440F101425-               movsd xmm10, [array + 8]        
+   128 00000104 [08000000]         
+   129                                  
+   130 00000108 F2450F59EA                  mulsd xmm13, xmm10            
+   131                                  
+   132                                  
+   133                                  ;end of program
+   134                                  endprogram:
+   135                                  
+   136                                  	;return message
+   137 0000010D B800000000                  mov rax, 0
+   138 00000112 48BF-                       mov rdi, stringformat
+   138 00000114 [9B00000000000000] 
+   139 0000011C 48BE-                       mov rsi, outputdistance
+   139 0000011E [7200000000000000] 
+   140 00000126 E8(00000000)                call printf
+   141                                  
+   142 0000012B F2410F10C5                  movsd xmm0, xmm13
+   143                                     
+   144 00000130 58                          pop rax
+   145 00000131 58                          pop rax
+   146                                  
+   147                                      ;pop registers to normal state
+   148 00000132 9D                          popf                                                 
+   149 00000133 5B                          pop rbx                                                     
+   150 00000134 415F                        pop r15                                                     
+   151 00000136 415E                        pop r14                                                      
+   152 00000138 415D                        pop r13                                                      
+   153 0000013A 415C                        pop r12                                                      
+   154 0000013C 415B                        pop r11                                                     
+   155 0000013E 415A                        pop r10                                                     
+   156 00000140 4159                        pop r9                                                      
+   157 00000142 4158                        pop r8                                                      
+   158 00000144 59                          pop rcx                                                     
+   159 00000145 5A                          pop rdx                                                     
+   160 00000146 5E                          pop rsi                                                     
+   161 00000147 5F                          pop rdi                                                     
+   162 00000148 5D                          pop rbp
+   163                                  
+   164 00000149 C3                          ret

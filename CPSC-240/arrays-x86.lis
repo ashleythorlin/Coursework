@@ -1,0 +1,274 @@
+     1                                  ;***************************************************************************************************************************
+     2                                  ;Program name: "Array Passing Demonstration".  This program demonstrates how to pass an array of floats from a C++ function *
+     3                                  ;to an X86 function, and back.  The X86 function makes changes to the array, and the C++ receives the array with changes    *
+     4                                  ;included.  Copyright (C) 2018  Floyd Holliday                                                                              *
+     5                                  ;This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License  *
+     6                                  ;version 3 as published by the Free Software Foundation.                                                                    *
+     7                                  ;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied         *
+     8                                  ;warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.     *
+     9                                  ;A copy of the GNU General Public License v3 is available here:  <https://www.gnu.org/licenses/>.                           *
+    10                                  ;****************************************************************************************************************************
+    11                                  
+    12                                  
+    13                                  
+    14                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+    15                                  
+    16                                  ;Author information
+    17                                  ;  Author name: Floyd Holliday
+    18                                  ;  Author email: holliday@fullerton.edu
+    19                                  ;
+    20                                  ;Program information
+    21                                  ;  Program name: Array Passing Demonstration
+    22                                  ;  Programming languages: Main function in C++; array receiving function in X86-64
+    23                                  ;  Date program began: 2018-Feb-20
+    24                                  ;  Date of last update: 2018-Feb-20
+    25                                  ;  Comments reorganized: 2018-Nov-10
+    26                                  ;  Files in the program: arrays-main.cpp, arrays-x86.asm, run.sh
+    27                                  ;
+    28                                  ;Purpose
+    29                                  ;  The intent of this program is to show some of the basic techniques for managing arrays.  Some interesting actions can be seen
+    30                                  ;  here.  You can discover where the C++ driver program stored the values 88.9 and 3.1416.  The action of returning from the X86 
+    31                                  ;  function causes the location previously holding 88.9 to change its value.
+    32                                  ;
+    33                                  ;This file
+    34                                  ;  File name: arrays-x86.asm
+    35                                  ;  Language: X86-64
+    36                                  ;  Syntax: Intel
+    37                                  ;  Max page width: 172 columns
+    38                                  ;  Optimal print specification: Landscape, 7-point font, monospace, 172 columns, 8½x11 paper
+    39                                  ;  Assemble: nasm -f elf64 -l arrays-x86.lis -o arrays-x86.o arrays-x86.asm
+    40                                  ;
+    41                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+    42                                  ;
+    43                                  ;Author information
+    44                                  ;  Author name: Floyd Holliday
+    45                                  ;  Author email: holliday@fullerton.edu
+    46                                  ;
+    47                                  ;Program information
+    48                                  ;  Program name: Array Sample Program
+    49                                  ;  Programming languages: X86 with one module in C++
+    50                                  ;  Date program began: 2018-Feb-20
+    51                                  ;  Date of last update: 2018-Feb-20
+    52                                  ;
+    53                                  ;Purpose
+    54                                  ;  The intent of this program is to show some of the basic tools or techniques for working with arrays.
+    55                                  ;
+    56                                  ;Project information
+    57                                  ;  Project files: arrays-main.cpp, arrays-x86.asm, run.sh
+    58                                  ;  Status: Available for public review.
+    59                                  ;
+    60                                  ;Translator information
+    61                                  ;  Linux: nasm -f elf64 -l arrays-x86.lis -o arrays-x86.o arrays-x86.asm
+    62                                  ;
+    63                                  ;References and credits
+    64                                  ;  Seyfarth, Chapter 10
+    65                                  ;
+    66                                  ;Format information
+    67                                  ;  Page width: 172 columns
+    68                                  ;  Begin comments: 61
+    69                                  ;  Optimal print specification: Landscape, 7 points, monospace, 8½x11 paper
+    70                                  ;
+    71                                  ;
+    72                                  ;
+    73                                  ;
+    74                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+    75                                  ;
+    76                                  ;===== Begin code area ====================================================================================================================================================
+    77                                  
+    78                                  ;%include "savedata.inc"                                     ;Not used in this program.  External macros that assist in data backup.
+    79                                  
+    80                                  ;%include "debug.inc"                                        ;Not now in use.  The debug tool was used during the development stages of this program.
+    81                                  
+    82                                  extern printf                                               ;External C++ function for writing to standard output device
+    83                                  
+    84                                  extern scanf                                                ;External C++ function for reading from the standard input device
+    85                                  
+    86                                  global array_tools                                          ;This makes array_tools callable by functions outside of this file.
+    87                                  
+    88                                  segment .data                                               ;Place initialized data here
+    89                                  
+    90                                  ;===== Declare some messages ==============================================================================================================================================
+    91                                  ;The identifiers in this segment are quadword pointers to ascii strings stored in heap space.  They are not variables.  They are not constants.  There are no constants in
+    92                                  ;assembly programming.  There are no variables in assembly programming: the registers assume the role of variables.
+    93                                  
+    94 00000000 546865205838362073-     array_tools.initialmessage db "The X86 subprogram is now executing.", 10, 0
+    94 00000009 756270726F6772616D-
+    94 00000012 206973206E6F772065-
+    94 0000001B 7865637574696E672E-
+    94 00000024 0A00               
+    95                                  
+    96 00000026 546865206669727374-     arrayaddressmessage db "The first element of the array is located at 0x%016lx in stack space", 10, 0
+    96 0000002F 20656C656D656E7420-
+    96 00000038 6F6620746865206172-
+    96 00000041 726179206973206C6F-
+    96 0000004A 636174656420617420-
+    96 00000053 3078253031366C7820-
+    96 0000005C 696E20737461636B20-
+    96 00000065 73706163650A00     
+    97                                  
+    98 0000006C 506C6561736520656E-     promptforcell db "Please enter an integer between 0 and 11 inclusively: ", 0
+    98 00000075 74657220616E20696E-
+    98 0000007E 746567657220626574-
+    98 00000087 7765656E203020616E-
+    98 00000090 6420313120696E636C-
+    98 00000099 75736976656C793A20-
+    98 000000A2 00                 
+    99                                  
+   100 000000A3 456E74657220612066-     promptmessage db "Enter a floating point number in base 10: ", 0
+   100 000000AC 6C6F6174696E672070-
+   100 000000B5 6F696E74206E756D62-
+   100 000000BE 657220696E20626173-
+   100 000000C7 652031303A2000     
+   101                                  
+   102 000000CE 54776F206E756D6265-     two_extra_numbers_form db "Two numbers in heap space after the end of the array are %1.16lf and %1.16lf",10,0
+   102 000000D7 727320696E20686561-
+   102 000000E0 702073706163652061-
+   102 000000E9 667465722074686520-
+   102 000000F2 656E64206F66207468-
+   102 000000FB 652061727261792061-
+   102 00000104 72652025312E31366C-
+   102 0000010D 6620616E642025312E-
+   102 00000116 31366C660A00       
+   103                                  
+   104 0000011C 54686F73652074776F-     student_message db "Those two numbers are stored in stack space adjacent to the end of the array.", 10, 0
+   104 00000125 206E756D6265727320-
+   104 0000012E 6172652073746F7265-
+   104 00000137 6420696E2073746163-
+   104 00000140 6B2073706163652061-
+   104 00000149 646A6163656E742074-
+   104 00000152 6F2074686520656E64-
+   104 0000015B 206F66207468652061-
+   104 00000164 727261792E0A00     
+   105                                  
+   106 0000016B 546865205838362073-     goodbye db "The X86 subprogram array_tools will now return to the caller program.", 10, 10, 0
+   106 00000174 756270726F6772616D-
+   106 0000017D 2061727261795F746F-
+   106 00000186 6F6C732077696C6C20-
+   106 0000018F 6E6F77207265747572-
+   106 00000198 6E20746F2074686520-
+   106 000001A1 63616C6C6572207072-
+   106 000001AA 6F6772616D2E0A0A00 
+   107                                  
+   108 000001B3 257300                  stringformat db "%s", 0                                     ;general string format
+   109                                  
+   110 000001B6 256C6400                integerformat db "%ld", 0                                   ;general decimal integer
+   111                                  
+   112 000001BA 256C6600                eight_byte_format db "%lf", 0                               ;general 8-byte float format
+   113                                  
+   114                                  segment .bss                                                ;Declare pointers to un-initialized space in this segment.
+   115                                  
+   116                                  
+   117                                  ;==========================================================================================================================================================================
+   118                                  ;===== Begin the application here: show how to input and output floating point numbers ====================================================================================
+   119                                  ;==========================================================================================================================================================================
+   120                                  
+   121                                  segment .text                                               ;Place executable instructions in this segment.
+   122                                  
+   123                                  array_tools:                                                ;Entry point.  Execution begins here.
+   124                                  
+   125                                  ;The next two instructions should be performed at the start of every assembly program.
+   126 00000000 55                      push       rbp                                              ;This marks the start of a new stack frame belonging to this execution of this function.
+   127 00000001 4889E5                  mov        rbp, rsp                                         ;rbp holds the address of the start of this new stack frame.  When this function returns to its caller rbp must
+   128                                                                                              ;hold the same value it holds now.
+   129                                  
+   130                                  ;=========== Save the data passed to this X86 subprogram =======================
+   131                                  
+   132 00000004 4989FD                  mov        r13, rdi                                         ;r13 holds the pointer to the array created in the caller program
+   133 00000007 4989F6                  mov        r14, rsi                                         ;r14 holds the size of the array that was passed to this x86 subprogram
+   134                                  
+   135                                  ;=========== Show the initial message =====================================================================================================================================
+   136                                  
+   137 0000000A B800000000              mov qword  rax, 0                                           ;No data from SSE will be printed
+   138 0000000F 48BF-                   mov        rdi, stringformat                                ;"%s"
+   138 00000011 [B301000000000000] 
+   139 00000019 48BE-                   mov        rsi, .initialmessage                             ;"The X86 subprogram is now executing."
+   139 0000001B [0000000000000000] 
+   140 00000023 E8(00000000)            call       printf                                           ;Call a library function to make the output
+   141                                  
+   142                                  ;=========== Show the starting address of the array sent here from the caller =============================================================================================
+   143                                  
+   144 00000028 B800000000              mov qword  rax, 0                                           ;No data from SSE will be printed
+   145 0000002D 48BF-                   mov        rdi, arrayaddressmessage                         ;"The first element of the array is located at 0x%016lx in the stack space"
+   145 0000002F [2600000000000000] 
+   146 00000037 4C89EE                  mov        rsi, r13                                         ;rsi has the address of the start of the array
+   147 0000003A E8(00000000)            call       printf
+   148                                  
+   149                                  ;=========== Prompt for an array cell number to change ====================================================================================================================
+   150                                  
+   151 0000003F B800000000              mov qword  rax, 0
+   152 00000044 48BF-                   mov        rdi, promptforcell                               ;"Please enter an integer between 0 and 11 inclusively: "
+   152 00000046 [6C00000000000000] 
+   153 0000004E E8(00000000)            call       printf
+   154                                  
+   155                                  ;===== OK to here
+   156                                  
+   157                                  ;=========== Input an integer between 0 and 11 ============================================================================================================================
+   158                                  
+   159 00000053 6A00                    push qword 0                                                ;Push 8 bytes solely for the purpose of getting onto an 16-byte boundary.
+   160 00000055 B800000000              mov qword  rax, 0                                           ;No xmm register are involved in the call to scanf
+   161 0000005A 6A00                    push qword 0                                                ;Create space in memory for the incoming number
+   162 0000005C 48BF-                   mov        rdi, integerformat                               ;"%ld"
+   162 0000005E [B601000000000000] 
+   163 00000066 4889E6                  mov        rsi, rsp                                         ;rsi points to the quadword of available space in memory
+   164 00000069 E8(00000000)            call       scanf
+   165 0000006E 415F                    pop        r15                                              ;The cell number is now in r15
+   166 00000070 58                      pop        rax                                              ;Remove the earlier push regarding the 16-byte boundary
+   167                                  
+   168                                  ;=========== Prompt for floating point number =============================================================================================================================
+   169 00000071 B800000000              mov qword  rax, 0                                           ;No data from SSE will be printed
+   170 00000076 48BF-                   mov        rdi, stringformat                                ;"%s"
+   170 00000078 [B301000000000000] 
+   171 00000080 48BE-                   mov        rsi, promptmessage                               ;"Enter a floating point number in base 10: "
+   171 00000082 [A300000000000000] 
+   172 0000008A E8(00000000)            call       printf                                           ;Call a library function to make the output
+   173                                  
+   174                                  ;=========== Obtain a floating point number from the standard input device and store it in r8 =============================================================================
+   175                                  
+   176 0000008F 6A00                    push qword 0                                                ;Push 8 bytes solely for the purpose of getting onto an 16-byte boundary.
+   177 00000091 6A00                    push qword 0                                                ;Reserve 8 bytes of storage for the incoming number
+   178 00000093 B800000000              mov qword  rax, 0                                           ;SSE is not involved in this scanf operation
+   179 00000098 48BF-                   mov        rdi, eight_byte_format                           ;"%lf"
+   179 0000009A [BA01000000000000] 
+   180 000000A2 4889E6                  mov        rsi, rsp                                         ;Give scanf a point to the reserved storage
+   181 000000A5 E8(00000000)            call       scanf                                            ;Call a library function to do the input work
+   182 000000AA 4158                    pop        r8                                               ;The float number is now in r8
+   183 000000AC 58                      pop        rax                                              ;Remove the earlier push regarding the 16-byte boundary
+   184                                  
+   185                                  ;=========== Place the inputted float number into its proper cell =========================================================================================================
+   186                                  
+   187 000000AD 4F8944FD00              mov        [r13+r15*8],r8                                   ;Copy the inputted number into slot r15 of the array
+   188                                  
+   189                                  ;=========== Just for fun: show two numbers in the heap located immediately after the end of the array =================================================================
+   190                                  
+   191 000000B2 B802000000              mov        rax, 2
+   192 000000B7 F2430F1044F500          movsd      xmm0,[r13+8*r14]
+   193 000000BE F2430F104CF508          movsd      xmm1,[r13+8*r14+8]
+   194 000000C5 48BF-                   mov        rdi,two_extra_numbers_form                       ;"Two numbers in heap space after the end of the array are %1.16lf and %1.16lf"
+   194 000000C7 [CE00000000000000] 
+   195 000000CF E8(00000000)            call       printf
+   196                                  
+   197 000000D4 B800000000              mov        rax, 0
+   198 000000D9 48BF-                   mov        rdi, student_message                             ;"Those two numbers are stored in stack space."
+   198 000000DB [1C01000000000000] 
+   199 000000E3 E8(00000000)            call       printf
+   200                                  
+   201                                  ;===== Conclusion message =================================================================================================================================================
+   202                                  ;It is not necessary to be on a boundary to output a string.
+   203                                  
+   204 000000E8 B800000000              mov qword  rax, 0                                           ;No data from SSE will be printed
+   205 000000ED 48BF-                   mov        rdi, stringformat                                ;"%s"
+   205 000000EF [B301000000000000] 
+   206 000000F7 48BE-                   mov        rsi, goodbye                                     ;"The X86 subprogram arrays-x86 will now return to the caller program."
+   206 000000F9 [6B01000000000000] 
+   207 00000101 E8(00000000)            call       printf                                           ;Call a library function to do the hard work.
+   208                                  
+   209                                  ;========== Send a float number back to the caller ========================================================================================================================
+   210                                  
+   211 00000106 F2430F1044FD00          movsd      xmm0,[r13+r15*8]                                 ;A copy from any memory location to a xmm register is allowed.
+   212                                  
+   213                                  ;===== Restore the pointer to the start of the stack frame before exiting from this function ==============================================================================
+   214                                  
+   215 0000010D 5D                      pop        rbp                                              ;Now the system stack is in the same state it was when this function began execution.
+   216 0000010E C3                      ret                                                         ;Pop a qword from the stack into rip, and continue executing..
+   217                                  ;========== End of program arrays-x86.asm =================================================================================================================================
+   218                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**

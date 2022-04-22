@@ -1,0 +1,232 @@
+     1                                  
+     2                                  ;===============================================================================================================================
+     3                                  ;
+     4                                  ;	Name: Ashley Thorlin
+     5                                  ;	Class/Section: CPSC 240-01 (took final with 240-05)
+     6                                  ;	Email: ashleythorlin@csu.fullerton.edu
+     7                                  ;	Program Name: SSE Benchmarking Program
+     8                                  ;
+     9                                  ;===============================================================================================================================
+    10                                  
+    11                                  extern printf
+    12                                  extern scanf
+    13                                  extern clock_speed
+    14                                  extern atof
+    15                                  
+    16                                  global benchmark
+    17                                  
+    18                                  section .data
+    19 00000000 57656C636F6D652074-     	welcome db "Welcome to SSE bench marking program.", 10, 0
+    19 00000009 6F205353452062656E-
+    19 00000012 6368206D61726B696E-
+    19 0000001B 672070726F6772616D-
+    19 00000024 2E0A00             
+    20 00000027 506C6561736520656E-         promptrate db "Please enter the rate (m/sec): ", 0 
+    20 00000030 746572207468652072-
+    20 00000039 61746520286D2F7365-
+    20 00000042 63293A2000         
+    21 00000047 506C6561736520656E-     	prompttime db "Please enter the time duration (seconds): ", 0
+    21 00000050 746572207468652074-
+    21 00000059 696D65206475726174-
+    21 00000062 696F6E20287365636F-
+    21 0000006B 6E6473293A2000     
+    22                                      ;startclock db "[Invisible: Read cpu clock and save %ld", 10, 0
+    23                                  	;computedistance db "[Invisible: Compute the distance and save it]", 10, 0
+    24                                      ;endclock db "[Invisible: Read the cpu clock one more time and save %ld.", 10, 0
+    25                                  
+    26 00000072 546865206469737461-         outputdistance db "The distance traveled was %.3lf meters.", 10, 0
+    26 0000007B 6E6365207472617665-
+    26 00000084 6C6564207761732025-
+    26 0000008D 2E336C66206D657465-
+    26 00000096 72732E0A00         
+    27 0000009B 54686520636F6D7075-         outputtics db "The computation required %ld tics or %lf nanosec.",10, 0
+    27 000000A4 746174696F6E207265-
+    27 000000AD 71756972656420256C-
+    27 000000B6 642074696373206F72-
+    27 000000BF 20256C66206E616E6F-
+    27 000000C8 7365632E0A00       
+    28                                  
+    29 000000CE 257300                      stringformat db "%s", 0
+    30 000000D1 256C6600                    floatformat db "%lf",0
+    31                                  
+    32                                  section .bss
+    33                                  section .text
+    34                                  
+    35                                  benchmark:
+    36                                  
+    37                                  ;backup registers
+    38 00000000 55                      push rbp
+    39 00000001 4889E5                  mov rbp, rsp
+    40 00000004 57                      push rdi
+    41 00000005 56                      push rsi
+    42 00000006 52                      push rdx
+    43 00000007 51                      push rcx
+    44 00000008 4150                    push r8
+    45 0000000A 4151                    push r9
+    46 0000000C 4152                    push r10
+    47 0000000E 4153                    push r11
+    48 00000010 4154                    push r12
+    49 00000012 4155                    push r13
+    50 00000014 4156                    push r14
+    51 00000016 4157                    push r15
+    52 00000018 53                      push rbx
+    53 00000019 9C                      pushf
+    54                                  
+    55 0000001A 6AFF                    push qword -1
+    56                                  
+    57                                  ;initialize 
+    58 0000001C 41BF00000000            mov r15, 0x0000000000000000               
+    59 00000022 664D0F6EE7              movq xmm12, r15
+    60 00000027 664D0F6EEF              movq xmm13, r15
+    61                                  
+    62                                  ;print welcome
+    63 0000002C B800000000              mov rax, 0
+    64 00000031 48BF-                   mov rdi, stringformat
+    64 00000033 [CE00000000000000] 
+    65 0000003B 48BE-                   mov rsi, welcome			;"Welcome to SSE bench marking program."
+    65 0000003D [0000000000000000] 
+    66 00000045 E8(00000000)            call printf
+    67                                  
+    68                                  ;prompt
+    69 0000004A B800000000              mov rax, 0
+    70 0000004F 48BF-                   mov rdi, stringformat       
+    70 00000051 [CE00000000000000] 
+    71 00000059 48BE-                   mov rsi, promptrate		;"Please enter the rate (m/sec): "
+    71 0000005B [2700000000000000] 
+    72 00000063 E8(00000000)            call printf                 
+    73                                  
+    74                                  ;get input
+    75 00000068 6AFF                    push qword -1
+    76 0000006A B801000000              mov rax, 1
+    77 0000006F 48BF-                   mov rdi, floatformat
+    77 00000071 [D100000000000000] 
+    78 00000079 4889E6                  mov rsi, rsp
+    79 0000007C E8(00000000)            call scanf
+    80                                  
+    81 00000081 F2440F102424            movsd xmm12, [rsp]
+    82                                  
+    83 00000087 58                      pop rax
+    84                                  
+    85                                  ;prompt
+    86 00000088 B800000000              mov rax, 0
+    87 0000008D 48BF-                   mov rdi, stringformat       
+    87 0000008F [CE00000000000000] 
+    88 00000097 48BE-                   mov rsi, prompttime		;"Please enter the time duration (seconds): "
+    88 00000099 [4700000000000000] 
+    89 000000A1 E8(00000000)            call printf              	   
+    90                                  
+    91                                  ;get input
+    92 000000A6 6AFF                    push qword -1
+    93 000000A8 B801000000              mov rax, 1
+    94 000000AD 48BF-                   mov rdi, floatformat
+    94 000000AF [D100000000000000] 
+    95 000000B7 4889E6                  mov rsi, rsp
+    96 000000BA E8(00000000)            call scanf
+    97                                  
+    98 000000BF F2440F102C24            movsd xmm13, [rsp]
+    99                                  
+   100 000000C5 58                      pop rax
+   101                                  
+   102                                  ;==============================================================================================
+   103                                  
+   104                                  ;starting clock
+   105 000000C6 B800000000              mov rax, 0  
+   106 000000CB BA00000000              mov rdx, 0
+   107                                  
+   108 000000D0 0FA2                    cpuid                              ;identify cpu
+   109 000000D2 0F31                    rdtsc                             	;counts number of tics
+   110                                  
+   111 000000D4 48C1E220                shl rdx, 32
+   112 000000D8 4801D0                  add rax, rdx
+   113                                  
+   114 000000DB 4989C6                  mov r14, rax                    	;save start clock time in r14
+   115                                  
+   116                                  ;print startclock
+   117                                  ;mov rax, 0
+   118                                  ;mov rdi, startclock             ;"[Invisible: Read cpu clock and save"
+   119                                  ;mov rsi, r14                    ;tics from gettime function
+   120                                  ;call printf                     
+   121                                  
+   122                                  ;==============================================================================================
+   123                                  
+   124                                  ;calculate distance
+   125 000000DE F2450F59E5              mulsd xmm12, xmm13
+   126                                  
+   127                                  ;==============================================================================================
+   128                                  
+   129                                  ;print computedistance
+   130                                  ;mov rax, 0
+   131                                  ;mov rdi, stringformat       
+   132                                  ;mov rsi, computedistance	;"[Invisible: Compute the distance and save it]"
+   133                                  ;call printf 
+   134                                  
+   135                                  ;ending clock
+   136 000000E3 B800000000              mov rax, 0  
+   137 000000E8 BA00000000              mov rdx, 0
+   138                                  
+   139 000000ED 0FA2                    cpuid                              ;identify cpu
+   140 000000EF 0F31                    rdtsc                             	;counts number of tics
+   141                                  
+   142 000000F1 48C1E220                shl rdx, 32
+   143 000000F5 4801D0                  add rax, rdx
+   144                                  
+   145 000000F8 4989C7                  mov r15, rax                    	;save start clock time in r15
+   146                                  
+   147 000000FB 58                      pop rax
+   148                                  
+   149                                  ;print finalclock
+   150                                  ;mov rax, 0
+   151                                  ;mov rdi, endclock               ;"[Invisible: Read the cpu clock one more time and save it."
+   152                                  ;mov rsi, r15
+   153                                  ;call printf
+   154                                  
+   155                                  ;output distance
+   156 000000FC B801000000              mov rax, 1
+   157 00000101 48BF-                   mov rdi, outputdistance             ; "The computation required %ld tics or %lf nanosec.",
+   157 00000103 [7200000000000000] 
+   158 0000010B F2410F10C4              movsd xmm0, xmm12                   ; elapsed time in tics
+   159 00000110 E8(00000000)            call printf
+   160                                  
+   161                                  ;calculate and print elapsed time
+   162                                  
+   163 00000115 F24D0F2AD7              cvtsi2sd xmm10, r15             ;end clock to float
+   164 0000011A F2490F2AFE              cvtsi2sd xmm7, r14              ;start clock to float
+   165 0000011F F2440F5CD7              subsd xmm10, xmm7               ;end clock - start clock = elapsed time in tics
+   166                                  
+   167 00000124 F24D0F2DFA              cvtsd2si r15, xmm10             ;elapsed time to int
+   168                                  
+   169 00000129 49B900000000666666-     mov r9, 0x4066666600000000		;3.6 in ieee
+   169 00000132 40                 
+   170 00000133 664D0F6ED9              movq xmm11, r9 
+   171                                  
+   172 00000138 F2450F5ED3              divsd xmm10, xmm11              ; divide elapsed time by cpu speed (cpu GHz) = nanosec
+   173                                  
+   174 0000013D B801000000              mov rax, 1
+   175 00000142 48BF-                   mov rdi, outputtics             ; "The computation required %ld tics or %lf nanosec.",
+   175 00000144 [9B00000000000000] 
+   176 0000014C 4C89FE                  mov rsi, r15                    ; elapsed time in tics
+   177 0000014F F2410F10C2              movsd xmm0, xmm10               ; elasped time in nanosec
+   178 00000154 E8(00000000)            call printf
+   179                                  
+   180                                  ;return to driver
+   181                                  
+   182 00000159 F3410F7EC2              movq xmm0, xmm10              ; pass nanosec to driver
+   183                                  ;restore registers
+   184                                  
+   185 0000015E 9D                      popf                                                 
+   186 0000015F 5B                      pop rbx                                                     
+   187 00000160 415F                    pop r15                                                     
+   188 00000162 415E                    pop r14                                                      
+   189 00000164 415D                    pop r13                                                      
+   190 00000166 415C                    pop r12                                                      
+   191 00000168 415B                    pop r11                                                     
+   192 0000016A 415A                    pop r10                                                     
+   193 0000016C 4159                    pop r9                                                      
+   194 0000016E 4158                    pop r8                                                      
+   195 00000170 59                      pop rcx                                                     
+   196 00000171 5A                      pop rdx                                                     
+   197 00000172 5E                      pop rsi                                                     
+   198 00000173 5F                      pop rdi                                                     
+   199 00000174 5D                      pop rbp
+   200                                  
+   201 00000175 C3                      ret

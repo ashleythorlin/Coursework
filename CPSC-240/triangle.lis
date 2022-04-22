@@ -1,0 +1,272 @@
+     1                                  ;================================================================================================================================
+     2                                  ;																																*
+     3                                  ;  Author information																											*
+     4                                  ;  Author name: Ashley Thorlin																									*
+     5                                  ;  Author email: ashleythorlin@csu.fullerton.edu																				*
+     6                                  ;																																*
+     7                                  ;===============================================================================================================================*
+     8                                  ;																																*
+     9                                  ;Program information																											*
+    10                                  ;  Program name: Triangle Program																								*
+    11                                  ;  Programming languages: Main function in C++; "Triangle" function in X86-64													*
+    12                                  ;  Files in the program: pythagoras.c, triangle.asm, r.sh																		*
+    13                                  ;																																*
+    14                                  ;===============================================================================================================================*
+    15                                  ;																																*
+    16                                  ;Copyright (C) 2021 Ashley Thorlin                                                                    				            *
+    17                                  ;	This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License   *
+    18                                  ;	version 3 as published by the Free Software Foundation.                                                                     *
+    19                                  ;	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied          *
+    20                                  ;	warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.      *
+    21                                  ;	A copy of the GNU General Public License v3 is available here:  <https://www.gnu.org/licenses/>.  							*
+    22                                  ;																																*
+    23                                  ;===============================================================================================================================*
+    24                                  ;																																*
+    25                                  ;Purpose																														*
+    26                                  ;  The intent of this program is to allow the user to input the lengths of two sides of a right triangle and the program will	*
+    27                                  ;	output the triangle's area and the length of the hypotenuse.																*
+    28                                  ;																																*
+    29                                  ;================================================================================================================================
+    30                                  
+    31                                  extern printf
+    32                                  
+    33                                  extern scanf
+    34                                  
+    35                                  global triangle
+    36                                  
+    37                                  two_point equ 0x4000000000000000
+    38                                  
+    39                                  max_name_size equ 32
+    40                                  
+    41                                  max_title_size equ 32
+    42                                  
+    43                                  ;================================================================================================================================
+    44                                  
+    45                                  segment .data 							;Declare messages
+    46                                  
+    47                                  align 16
+    48                                  
+    49 00000000 506C6561736520656E-     input_name db "Please enter your last name: ", 0
+    49 00000009 74657220796F757220-
+    49 00000012 6C617374206E616D65-
+    49 0000001B 3A2000             
+    50                                  
+    51 0000001E 506C6561736520656E-     input_title db "Please enter your title (Mr, Ms, Nurse, Engineer, etc): ", 0
+    51 00000027 74657220796F757220-
+    51 00000030 7469746C6520284D72-
+    51 00000039 2C204D732C204E7572-
+    51 00000042 73652C20456E67696E-
+    51 0000004B 6565722C2065746329-
+    51 00000054 3A2000             
+    52                                  
+    53 00000057 506C6561736520656E-     input_sides db "Please enter the sides of your triangle separated by whitespace: ", 0
+    53 00000060 746572207468652073-
+    53 00000069 69646573206F662079-
+    53 00000072 6F757220747269616E-
+    53 0000007B 676C65207365706172-
+    53 00000084 617465642062792077-
+    53 0000008D 686974657370616365-
+    53 00000096 3A2000             
+    54                                  
+    55 00000099 546865206172656120-     output_area db "The area of this triangle is %.5lf sq units.", 10, 0
+    55 000000A2 6F6620746869732074-
+    55 000000AB 7269616E676C652069-
+    55 000000B4 7320252E356C662073-
+    55 000000BD 7120756E6974732E0A-
+    55 000000C6 00                 
+    56                                  
+    57 000000C7 546865206C656E6774-     output_hypo db "The length of the hypotenuse is %.5lf units", 10, 0
+    57 000000D0 68206F662074686520-
+    57 000000D9 6879706F74656E7573-
+    57 000000E2 6520697320252E356C-
+    57 000000EB 6620756E6974730A00 
+    58                                  
+    59 000000F4 456E6A6F7920796F75-     exit_message db "Enjoy your triangle ", 0
+    59 000000FD 7220747269616E676C-
+    59 00000106 652000             
+    60                                  
+    61 00000109 257300                  stringformat db "%s", 0
+    62                                  
+    63 0000010C 252E356C6600            floatformat db "%.5lf", 0
+    64                                  
+    65 00000112 256C66256C6600          floatsformat db "%lf%lf", 0
+    66                                  
+    67 00000119 90<rept>                align 64
+    68                                  
+    69                                  ;================================================================================================================================
+    70                                  
+    71                                  segment .bss							;Define pointers for user input
+    72                                  
+    73 00000000 <res 00000020>          user_name resb max_name_size
+    74                                  
+    75 00000020 <res 00000020>          user_title resb max_title_size
+    76                                  
+    77                                  ;================================================================================================================================
+    78                                  
+    79                                  segment .text
+    80                                  
+    81                                  triangle:
+    82                                  
+    83                                  	;Backup registers
+    84 00000000 55                      	push rbp
+    85 00000001 4889E5                  	mov  rbp, rsp
+    86 00000004 57                      	push rdi
+    87 00000005 56                      	push rsi
+    88 00000006 52                      	push rdx
+    89 00000007 51                      	push rcx
+    90 00000008 4150                    	push r8
+    91 0000000A 4151                    	push r9
+    92 0000000C 4152                    	push r10
+    93 0000000E 4153                    	push r11
+    94 00000010 4154                    	push r12
+    95 00000012 4155                    	push r13
+    96 00000014 4156                    	push r14
+    97 00000016 4157                    	push r15
+    98 00000018 53                      	push rbx
+    99 00000019 9C                      	pushf
+   100                                  	
+   101 0000001A 6A00                    	push 	qword 0
+   102                                  	
+   103                                  	;prompt user for name
+   104                                  	
+   105 0000001C B800000000              	mov 	rax, 0
+   106 00000021 48BF-                   	mov 	rdi, stringformat
+   106 00000023 [0901000000000000] 
+   107 0000002B 48BE-                   	mov 	rsi, input_name			;"Please enter your last name: "
+   107 0000002D [0000000000000000] 
+   108 00000035 E8(00000000)            	call 	printf
+   109                                  	
+   110                                  	;get user input for name
+   111 0000003A B800000000              	mov		rax, 0
+   112 0000003F 48BF-                   	mov		rdi, user_name			;example: Thorlin
+   112 00000041 [0000000000000000] 
+   113 00000049 BE20000000              	mov		rsi, max_name_size
+   114 0000004E E8(00000000)            	call	scanf
+   115                                  	
+   116                                  	;prompt user for title
+   117 00000053 B800000000              	mov		rax, 0
+   118 00000058 48BF-                   	mov		rdi, stringformat
+   118 0000005A [0901000000000000] 
+   119 00000062 48BE-                   	mov 	rsi, input_title		;"Please enter your title (Mr, Ms, Nurse, Engineer, etc): "
+   119 00000064 [1E00000000000000] 
+   120 0000006C E8(00000000)            	call 	printf
+   121                                  	
+   122                                  	
+   123                                  	;get user input for title
+   124 00000071 B800000000              	mov		rax, 0
+   125 00000076 48BF-                   	mov		rdi, user_title			;example: Programmer
+   125 00000078 [2000000000000000] 
+   126 00000080 BE20000000              	mov		rsi, max_title_size
+   127 00000085 E8(00000000)            	call	scanf
+   128                                  	
+   129                                  	;prompt user for triangle sides
+   130 0000008A B800000000              	mov 	rax, 0
+   131 0000008F 48BF-                   	mov 	rdi, stringformat
+   131 00000091 [0901000000000000] 
+   132 00000099 48BE-                   	mov 	rsi, input_sides		;"Please enter the sides of your triangle separated by whitespace: "
+   132 0000009B [5700000000000000] 
+   133 000000A3 E8(00000000)            	call 	printf
+   134                                  	
+   135                                  	;get user input for sides
+   136 000000A8 6AFF                    	push 	qword -1
+   137 000000AA 6AFE                    	push 	qword -2
+   138 000000AC B800000000              	mov 	rax, 0
+   139 000000B1 48BF-                   	mov 	rdi, floatsformat
+   139 000000B3 [1201000000000000] 
+   140 000000BB 4889E6                  	mov 	rsi, rsp				;move first to top of stack
+   141 000000BE 4889E2                  	mov		rdx, rsp				;move second side to top of stack (first is now below)
+   142 000000C1 4883C208                	add 	rdx, 8					;idk tbh
+   143 000000C5 E8(00000000)            	call 	scanf
+   144                                  	
+   145 000000CA F20F100C24              	movsd 	xmm1, [rsp]				;set xmm1 to value at top of stack
+   146 000000CF F20F10D1                	movsd 	xmm2, xmm1				;copy xmm1 to xmm2 (one copy to use for area, other for hypotenuse)
+   147 000000D3 F20F105C2408            	movsd 	xmm3, [rsp+8]			;set xmm3 to value second in the stack
+   148 000000D9 F20F10E3                	movsd 	xmm4, xmm3				;copy xmm3 to xmm4
+   149 000000DD 58                      	pop 	rax                     ;Reverse "push qword -2"
+   150 000000DE 58                      	pop 	rax                     ;Reverse "push qword -1"
+   151                                  	
+   152                                  	;-----Calculate Area------
+   153                                  	
+   154                                  	;put 2.0 on stack
+   155 000000DF 48B800000000000000-     	mov     rax, 0x4000000000000000
+   155 000000E8 40                 
+   156 000000E9 50                      	push    rax
+   157 000000EA F2440F102424            	movsd   xmm12, [rsp]
+   158 000000F0 58                      	pop     rax
+   159                                  
+   160                                  	;multiply sides
+   161 000000F1 F20F59CB                	mulsd 	xmm1, xmm3				;multiply side 1 by side 2
+   162                                  		
+   163                                  	;divide by two
+   164                                  	;mov 	rbx, two_point				;prepare "two" (initialized value of 2.0) for stack
+   165                                  	;push 	rbx						;push "two" to top of stack
+   166 000000F5 F2410F5ECC              	divsd	xmm1, xmm12				;divide xmm0 (side 1 X side 2) by 2.0
+   167                                  	;pop 	rax						;remove "two" from top of stack
+   168                                  	
+   169                                  	;output area of triangle
+   170 000000FA F20F10C1                	movsd	xmm0, xmm1
+   171 000000FE 48BF-                   	mov 	rdi, output_area		;"The area of this triangle is <area>"
+   171 00000100 [9900000000000000] 
+   172 00000108 B801000000              	mov 	rax, 1
+   173 0000010D E8(00000000)            	call 	printf
+   174                                  	
+   175                                  	;calculate hypotenuse length
+   176 00000112 F20F59D2                	mulsd 	xmm2, xmm2				;square xmm2 (copy of side 1 value)
+   177 00000116 F20F59E4                	mulsd 	xmm4, xmm4				;square xmm4 (copy of side 2 value)
+   178 0000011A F20F58D4                	addsd 	xmm2, xmm4				;add xmm2 and xmm4 (squared side values)
+   179 0000011E F20F51EA                	sqrtsd	xmm5, xmm2				;get square root of the added values, save to xmm5
+   180                                  	
+   181                                  	;output hypotenuse
+   182 00000122 F20F10C5                	movsd 	xmm0, xmm5
+   183 00000126 48BF-                   	mov 	rdi, output_hypo		;"The length of the hypotenuse is %.5lf units"
+   183 00000128 [C700000000000000] 
+   184 00000130 B801000000              	mov 	rax, 1
+   185 00000135 4989C5                  	mov 	r13, rax
+   186 00000138 E8(00000000)            	call 	printf
+   187                                  	
+   188                                  	;goodbye message
+   189 0000013D B800000000              	mov		rax, 0
+   190 00000142 48BF-                   	mov 	rdi, stringformat
+   190 00000144 [0901000000000000] 
+   191 0000014C 48BE-                   	mov		rsi, exit_message			;"Enjoy your triangle "
+   191 0000014E [F400000000000000] 
+   192 00000156 E8(00000000)            	call	printf
+   193                                  	
+   194 0000015B B800000000              	mov 	rax, 0
+   195 00000160 48BF-                   	mov		rdi, stringformat
+   195 00000162 [0901000000000000] 
+   196 0000016A 48BE-                   	mov		rsi, user_title
+   196 0000016C [2000000000000000] 
+   197 00000174 E8(00000000)            	call 	printf
+   198                                  	
+   199 00000179 B800000000              	mov 	rax, 0
+   200 0000017E 48BF-                   	mov		rdi, stringformat
+   200 00000180 [0901000000000000] 
+   201 00000188 48BE-                   	mov		rsi, user_name
+   201 0000018A [0000000000000000] 
+   202 00000192 E8(00000000)            	call 	printf
+   203                                  	
+   204                                  	;return hypotenuse length to triangle
+   205 00000197 F20F10C5                	movsd 	xmm0, xmm5
+   206                                  	
+   207 0000019B 58                      	pop 	rax
+   208 0000019C 58                      	pop 	rax
+   209                                  	
+   210                                  	;pop the system stack
+   211 0000019D 9D                      	popf          
+   212 0000019E 5B                      	pop rbx                                                                                            
+   213 0000019F 415F                    	pop r15                                                     
+   214 000001A1 415E                    	pop r14                                                      
+   215 000001A3 415D                    	pop r13                                                      
+   216 000001A5 415C                    	pop r12                                                      
+   217 000001A7 415B                    	pop r11                                                     
+   218 000001A9 415A                    	pop r10                                                     
+   219 000001AB 4159                    	pop r9                                                      
+   220 000001AD 4158                    	pop r8                                                      
+   221 000001AF 59                      	pop rcx                                                     
+   222 000001B0 5A                      	pop rdx                                                     
+   223 000001B1 5E                      	pop rsi                                                     
+   224 000001B2 5F                      	pop rdi                                                     
+   225 000001B3 5D                      	pop rbp
+   226                                  
+   227 000001B4 C3                      	ret
