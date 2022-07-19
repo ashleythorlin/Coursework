@@ -1,0 +1,815 @@
+#include <iostream>
+#include <iomanip>
+
+#include <vector>
+#include <set>
+
+#include <cassert>
+#include <fstream>
+
+#include "aes.h"
+#include "utils.h"
+
+
+// #include "gtest/gtest.h"
+
+const unsigned int BLOCK_BYTES_LENGTH = 16 * sizeof(unsigned char);
+
+// TEST(KeyLengths, KeyLength128) {
+void test_encrypt_ecb_keylength_128() {
+    std::cout << "\t"  << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30,
+                            0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a};
+    unsigned char *out = aes.EncryptECB(plain, BLOCK_BYTES_LENGTH, key);
+
+    delete[] out;
+    assert(memcmp(right, out, BLOCK_BYTES_LENGTH));
+    // ASSERT_FALSE(memcmp(right, out, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(KeyLengths, KeyLength192) {
+void test_encrypt_ecb_keylength_192() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_192);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
+    unsigned char right[] = {0xdd, 0xa9, 0x7c, 0xa4, 0x86, 0x4c, 0xdf, 0xe0,
+                            0x6e, 0xaf, 0x70, 0xa0, 0xec, 0x0d, 0x71, 0x91};
+
+    unsigned char *out = aes.EncryptECB(plain, BLOCK_BYTES_LENGTH, key);
+    // ASSERT_FALSE(memcmp(right, out, BLOCK_BYTES_LENGTH));
+
+    delete[] out;
+    assert(memcmp(right, out, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(KeyLengths, KeyLength256) {
+void test_encrypt_ecb_keylength_256() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                          0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+    unsigned char right[] = {0x8e, 0xa2, 0xb7, 0xca, 0x51, 0x67, 0x45, 0xbf,
+                            0xea, 0xfc, 0x49, 0x90, 0x4b, 0x49, 0x60, 0x89};
+
+    unsigned char *out = aes.EncryptECB(plain, BLOCK_BYTES_LENGTH, key);
+    // ASSERT_FALSE(memcmp(right, out, BLOCK_BYTES_LENGTH));
+
+    delete[] out;
+    assert(memcmp(right, out, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(ECB, EncryptDecryptOneBlock) {
+void test_encrypt_decrypt_one_block() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                          0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    unsigned char *out = aes.EncryptECB(plain, BLOCK_BYTES_LENGTH, key);
+    unsigned char *innew = aes.DecryptECB(out, BLOCK_BYTES_LENGTH, key);
+    // ASSERT_FALSE(memcmp(innew, plain, BLOCK_BYTES_LENGTH));
+    delete[] out;
+    delete[] innew;
+
+    assert(memcmp(innew, plain, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(ECB, EncryptDecryptVectorOneBlock) {
+void test_encrypt_decrypt_vector_one_block() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+                                        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+                                        0xcc, 0xdd, 0xee, 0xff};
+
+    std::vector<unsigned char> key = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+        0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    std::vector<unsigned char> out = aes.EncryptECB(plain, key);
+    std::vector<unsigned char> innew = aes.DecryptECB(out, key);
+
+    assert(innew == plain);
+    // ASSERT_EQ(innew, plain);
+}
+
+// TEST(ECB, OneBlockEncrypt) {
+void test_one_block_encrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30,
+                            0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a};
+    unsigned char *out = aes.EncryptECB(plain, BLOCK_BYTES_LENGTH, key);
+
+    // ASSERT_FALSE(memcmp(right, out, BLOCK_BYTES_LENGTH));
+
+    delete[] out;
+
+    assert(memcmp(right, out, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(ECB, OneBlockEncryptVector) {
+void test_one_block_encrypt_vector() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+                                        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+                                        0xcc, 0xdd, 0xee, 0xff};
+    std::vector<unsigned char> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                      0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                      0x0c, 0x0d, 0x0e, 0x0f};
+    std::vector<unsigned char> right = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b,
+                                        0x04, 0x30, 0xd8, 0xcd, 0xb7, 0x80,
+                                        0x70, 0xb4, 0xc5, 0x5a};
+    std::vector<unsigned char> out = aes.EncryptECB(plain, key);
+
+    // ASSERT_EQ(right, out);
+
+    assert(right == out);
+}
+
+
+// TEST(ECB, OneBlockWithoutByteEncrypt) {
+void test_ecb_one_block_without_byte_encrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+
+    aes.EncryptECB(plain, (BLOCK_BYTES_LENGTH - 1 * sizeof(unsigned char)), key);
+}
+
+// TEST(ECB, OneBlockPlusOneByteEncrypt) {          // TODO:  issue
+void test_ecb_one_block_plus_one_byte_encrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+                            0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0xaa};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+
+
+    std::cout << "PLUS OK?\n";
+    aes.EncryptECB(plain, (BLOCK_BYTES_LENGTH + 1) * sizeof(unsigned char), key);
+
+    std::cout << "PLUS OK\n";
+}
+
+// TEST(ECB, TwoBlocksEncrypt) {
+void test_ecb_two_blocks_encrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                            0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {
+        0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30, 0xd8, 0xcd, 0xb7,
+        0x80, 0x70, 0xb4, 0xc5, 0x5a, 0x07, 0xfe, 0xef, 0x74, 0xe1, 0xd5,
+        0x03, 0x6e, 0x90, 0x0e, 0xee, 0x11, 0x8e, 0x94, 0x92, 0x93,
+    };
+    unsigned char *out = aes.EncryptECB(plain, 2 * BLOCK_BYTES_LENGTH, key);
+
+    // ASSERT_FALSE(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+
+    delete[] out;
+    assert(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+}
+
+// TEST(ECB, OneBlockDecrypt) {
+void test_ecb_one_block_decrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char encrypted[] = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30,
+                                0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char *out = aes.DecryptECB(encrypted, BLOCK_BYTES_LENGTH, key);
+
+    // ASSERT_FALSE(memcmp(right, out, BLOCK_BYTES_LENGTH));
+
+    delete[] out;
+    assert(memcmp(right, out, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(ECB, OneBlockDecryptVector) {
+void test_ecb_one_block_decrypt_vector() { 
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    std::vector<unsigned char> encrypted = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b,
+                                            0x04, 0x30, 0xd8, 0xcd, 0xb7, 0x80,
+                                            0x70, 0xb4, 0xc5, 0x5a};
+    std::vector<unsigned char> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                      0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                      0x0c, 0x0d, 0x0e, 0x0f};
+    std::vector<unsigned char> right = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+                                        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+                                        0xcc, 0xdd, 0xee, 0xff};
+    std::vector<unsigned char> out = aes.DecryptECB(encrypted, key);
+
+    assert(right == out);
+}
+//     ASSERT_EQ(right, out);
+// }
+
+// TEST(ECB, TwoBlocksDecrypt) {
+void test_ecb_two_blocks_decrypt() { 
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char encrypted[] = {
+        0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30, 0xd8, 0xcd, 0xb7,
+        0x80, 0x70, 0xb4, 0xc5, 0x5a, 0x07, 0xfe, 0xef, 0x74, 0xe1, 0xd5,
+        0x03, 0x6e, 0x90, 0x0e, 0xee, 0x11, 0x8e, 0x94, 0x92, 0x93,
+    };
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                            0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+    unsigned char *out = aes.DecryptECB(encrypted, 2 * BLOCK_BYTES_LENGTH, key);
+
+
+    // ASSERT_FALSE(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+
+    delete[] out;
+    assert(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+}
+
+// TEST(CBC, EncryptDecrypt) {
+void test_cbc_encrypt_decrypt() { 
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                          0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    unsigned char *out = aes.EncryptCBC(plain, BLOCK_BYTES_LENGTH, key, iv);
+    unsigned char *innew = aes.DecryptCBC(out, BLOCK_BYTES_LENGTH, key, iv);
+
+    // ASSERT_FALSE(memcmp(innew, plain, BLOCK_BYTES_LENGTH));
+    delete[] out;
+    delete[] innew;
+    assert(memcmp(innew, plain, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(CBC, EncryptDecryptVector) {
+void test_cbc_encrypt_decrypt_vector() { 
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+                                        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+                                        0xcc, 0xdd, 0xee, 0xff};
+    std::vector<unsigned char> iv = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff};
+    std::vector<unsigned char> key = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+        0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    std::vector<unsigned char> out = aes.EncryptCBC(plain, key, iv);
+    std::vector<unsigned char> innew = aes.DecryptCBC(out, key, iv);
+    // ASSERT_EQ(innew, plain);
+
+    assert(innew == plain);
+}
+
+// TEST(CBC, TwoBlocksEncrypt) {
+void test_cbc_two_blocks_encrypt() { 
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x1b, 0x87, 0x23, 0x78, 0x79, 0x5f, 0x4f, 0xfd,
+                            0x77, 0x28, 0x55, 0xfc, 0x87, 0xca, 0x96, 0x4d,
+                            0x4c, 0x5b, 0xca, 0x1c, 0x48, 0xcd, 0x88, 0x00,
+                            0x3a, 0x10, 0x52, 0x11, 0x88, 0x12, 0x5e, 0x00};
+
+    unsigned char *out = aes.EncryptCBC(plain, 2 * BLOCK_BYTES_LENGTH, key, iv);
+  // ASSERT_FALSE(memcmp(out, right, 2 * BLOCK_BYTES_LENGTH));
+    delete[] out;
+    assert(memcmp(out, right, 2 * BLOCK_BYTES_LENGTH));
+
+}
+
+// TEST(CBC, TwoBlocksEncryptVector) {
+void test_cbc_two_blocks_encrypt_vector() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    std::vector<unsigned char> plain = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    std::vector<unsigned char> iv = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff};
+    std::vector<unsigned char> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                      0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                      0x0c, 0x0d, 0x0e, 0x0f};
+    std::vector<unsigned char> right = {
+        0x1b, 0x87, 0x23, 0x78, 0x79, 0x5f, 0x4f, 0xfd, 0x77, 0x28, 0x55,
+        0xfc, 0x87, 0xca, 0x96, 0x4d, 0x4c, 0x5b, 0xca, 0x1c, 0x48, 0xcd,
+        0x88, 0x00, 0x3a, 0x10, 0x52, 0x11, 0x88, 0x12, 0x5e, 0x00};
+
+    std::vector<unsigned char> out = aes.EncryptCBC(plain, key, iv);
+
+    // ASSERT_EQ(out, right);
+    assert(out == right);
+}
+
+// TEST(CBC, TwoBlocksDecrypt) {
+void test_cbc_two_blocks_decrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char encrypted[] = {0x1b, 0x87, 0x23, 0x78, 0x79, 0x5f, 0x4f, 0xfd,
+                                0x77, 0x28, 0x55, 0xfc, 0x87, 0xca, 0x96, 0x4d,
+                                0x4c, 0x5b, 0xca, 0x1c, 0x48, 0xcd, 0x88, 0x00,
+                                0x3a, 0x10, 0x52, 0x11, 0x88, 0x12, 0x5e, 0x00};
+
+    unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    unsigned char *out =
+        aes.DecryptCBC(encrypted, 2 * BLOCK_BYTES_LENGTH, key, iv);
+
+    // ASSERT_FALSE(memcmp(out, right, 2 * BLOCK_BYTES_LENGTH));
+    delete[] out;
+    assert(memcmp(out, right, 2 * BLOCK_BYTES_LENGTH));
+}
+
+// TEST(CBC, TwoBlocksDecryptVector) {
+void test_cbc_two_blocks_decrypt_vector() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    std::vector<unsigned char> encrypted = {
+        0x1b, 0x87, 0x23, 0x78, 0x79, 0x5f, 0x4f, 0xfd, 0x77, 0x28, 0x55,
+        0xfc, 0x87, 0xca, 0x96, 0x4d, 0x4c, 0x5b, 0xca, 0x1c, 0x48, 0xcd,
+        0x88, 0x00, 0x3a, 0x10, 0x52, 0x11, 0x88, 0x12, 0x5e, 0x00};
+
+    std::vector<unsigned char> iv = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff};
+    std::vector<unsigned char> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                      0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                      0x0c, 0x0d, 0x0e, 0x0f};
+    std::vector<unsigned char> right = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    std::vector<unsigned char> out = aes.DecryptCBC(encrypted, key, iv);
+
+    // ASSERT_EQ(out, right);
+    assert(out == right);
+}
+
+// TEST(CFB, EncryptDecrypt) {
+
+void test_cfb_encrypt_decrypt() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                          0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    unsigned char *out = aes.EncryptCFB(plain, BLOCK_BYTES_LENGTH, key, iv);
+    unsigned char *innew = aes.DecryptCFB(out, BLOCK_BYTES_LENGTH, key, iv);
+    // ASSERT_FALSE(memcmp(innew, plain, BLOCK_BYTES_LENGTH));
+    delete[] out;
+    delete[] innew;
+    assert(memcmp(innew, plain, BLOCK_BYTES_LENGTH));
+}
+
+// TEST(CFB, EncryptDecryptVector) {
+void test_cfb_encrypt_decrypt_vector() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+                                        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+                                        0xcc, 0xdd, 0xee, 0xff};
+    std::vector<unsigned char> iv = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff};
+    std::vector<unsigned char> key = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+        0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    std::vector<unsigned char> out = aes.EncryptCFB(plain, key, iv);
+    std::vector<unsigned char> innew = aes.DecryptCFB(out, key, iv);
+
+    // ASSERT_EQ(innew, plain);
+
+    assert(innew == plain);
+}
+
+// TEST(CFB, EncryptTwoBlocks) {
+void test_cfb_encrypt_twoblocks() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x3c, 0x55, 0x3d, 0x01, 0x8a, 0x52, 0xe4, 0x54,
+                            0xec, 0x4e, 0x08, 0x22, 0xc2, 0x8d, 0x55, 0xec,
+                            0xe3, 0x5a, 0x40, 0xab, 0x30, 0x29, 0xf3, 0x0c,
+                            0xe1, 0xdb, 0x30, 0x6c, 0xa1, 0x05, 0xcb, 0xa9};
+
+    unsigned char *out = aes.EncryptCFB(plain, 2 * BLOCK_BYTES_LENGTH, key, iv);
+    
+    // ASSERT_FALSE(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+    delete[] out;
+    assert(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+}
+
+// TEST(CFB, EncryptTwoBlocksVector) {
+void test_cfb_encrypt_twoblocks_vector() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    std::vector<unsigned char> plain = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    std::vector<unsigned char> iv = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff};
+    std::vector<unsigned char> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                      0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                      0x0c, 0x0d, 0x0e, 0x0f};
+    std::vector<unsigned char> right = {
+        0x3c, 0x55, 0x3d, 0x01, 0x8a, 0x52, 0xe4, 0x54, 0xec, 0x4e, 0x08,
+        0x22, 0xc2, 0x8d, 0x55, 0xec, 0xe3, 0x5a, 0x40, 0xab, 0x30, 0x29,
+        0xf3, 0x0c, 0xe1, 0xdb, 0x30, 0x6c, 0xa1, 0x05, 0xcb, 0xa9};
+
+    std::vector<unsigned char> out = aes.EncryptCFB(plain, key, iv);
+    // ASSERT_EQ(right, out);
+
+    assert(right == out);
+}
+
+// TEST(CFB, DecryptTwoBlocks) {
+void test_cfb_decrypt_twoblocks() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    std::vector<unsigned char> encrypted = {
+        0x3c, 0x55, 0x3d, 0x01, 0x8a, 0x52, 0xe4, 0x54, 0xec, 0x4e, 0x08,
+        0x22, 0xc2, 0x8d, 0x55, 0xec, 0xe3, 0x5a, 0x40, 0xab, 0x30, 0x29,
+        0xf3, 0x0c, 0xe1, 0xdb, 0x30, 0x6c, 0xa1, 0x05, 0xcb, 0xa9};
+    std::vector<unsigned char> iv = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                    0xff, 0xff, 0xff, 0xff};
+    std::vector<unsigned char> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                      0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                      0x0c, 0x0d, 0x0e, 0x0f};
+    std::vector<unsigned char> right = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+        0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    std::vector<unsigned char> out = aes.DecryptCFB(encrypted, key, iv);
+
+    // ASSERT_EQ(right, out);
+
+    assert(right == out);
+}
+
+// TEST(CFB, DecryptTwoBlocksVector) {
+void test_cfb_decrypt_twoblocks_vector() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+    unsigned char encrypted[] = {0x3c, 0x55, 0x3d, 0x01, 0x8a, 0x52, 0xe4, 0x54,
+                                0xec, 0x4e, 0x08, 0x22, 0xc2, 0x8d, 0x55, 0xec,
+                                0xe3, 0x5a, 0x40, 0xab, 0x30, 0x29, 0xf3, 0x0c,
+                                0xe1, 0xdb, 0x30, 0x6c, 0xa1, 0x05, 0xcb, 0xa9};
+    unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    unsigned char right[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    unsigned char *out =
+        aes.DecryptCFB(encrypted, 2 * BLOCK_BYTES_LENGTH, key, iv);
+
+    // ASSERT_FALSE(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+    delete[] out;
+    assert(memcmp(right, out, 2 * BLOCK_BYTES_LENGTH));
+}
+
+// TEST(LongData, EncryptDecryptOneKb) {
+void test_ecb_256_longdata_encrypt_decrypt_one_kb() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    unsigned int kbSize = 1024 * sizeof(unsigned char);
+    unsigned char *plain = new unsigned char[kbSize];
+    for (unsigned int i = 0; i < kbSize; i++) {
+        plain[i] = i % 256;
+    }
+
+    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                          0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                          0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    unsigned char *out = aes.EncryptECB(plain, kbSize, key);
+    unsigned char *innew = aes.DecryptECB(out, kbSize, key);
+    // ASSERT_FALSE(memcmp(innew, plain, kbSize));
+    delete[] plain;
+    delete[] out;
+    delete[] innew;
+
+    assert(memcmp(innew, plain, kbSize));
+}
+
+// TEST(LongData, EncryptDecryptVectorOneKb) {
+void test_ecb_256_longdata_encrypt_decrypt_vector_one_kb() {
+    std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_256);
+    unsigned int kbSize = 1024 * sizeof(unsigned char);
+    std::vector<unsigned char> plain(kbSize);
+    for (unsigned int i = 0; i < kbSize; i++) {
+        plain[i] = i % 256;
+    }
+
+    std::vector<unsigned char> key = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+        0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+    std::vector<unsigned char> out = aes.EncryptECB(plain, key);
+    std::vector<unsigned char> innew = aes.DecryptECB(out, key);
+
+    // ASSERT_EQ(innew, plain);
+    assert(innew == plain);
+}
+
+
+
+void run_AES_tests() { 
+    test_encrypt_ecb_keylength_128();
+    test_encrypt_ecb_keylength_192();
+    test_encrypt_ecb_keylength_256();
+    std::cout << "\n";
+
+    test_encrypt_decrypt_one_block();
+    test_encrypt_decrypt_vector_one_block();
+    test_one_block_encrypt();
+    std::cout << "\n";
+
+    test_ecb_two_blocks_decrypt();
+    test_ecb_one_block_decrypt_vector();
+    test_ecb_one_block_decrypt();
+    test_ecb_two_blocks_encrypt();
+    // test_ecb_one_block_plus_one_byte_encrypt();
+    // test_ecb_one_block_without_byte_encrypt();
+    std::cout << "\n";
+
+    test_ecb_one_block_decrypt();
+    test_ecb_one_block_decrypt_vector();
+    test_ecb_two_blocks_decrypt();
+    std::cout << "\n";
+
+    test_cbc_encrypt_decrypt();
+    test_cbc_encrypt_decrypt_vector();
+    test_cbc_two_blocks_encrypt();
+    test_cbc_two_blocks_encrypt_vector();
+    test_cbc_two_blocks_decrypt();
+    test_cbc_two_blocks_decrypt_vector();
+    std::cout << "\n";
+
+    test_cfb_encrypt_decrypt();
+    test_cfb_encrypt_decrypt_vector();
+    test_cfb_encrypt_twoblocks();
+    test_cfb_encrypt_twoblocks_vector(); 
+    test_cfb_decrypt_twoblocks();
+    test_cfb_decrypt_twoblocks_vector();
+    std::cout << "\n";
+
+    test_ecb_256_longdata_encrypt_decrypt_one_kb();
+    test_ecb_256_longdata_encrypt_decrypt_vector_one_kb(); 
+    std::cout << "\n";
+
+    std::cout << "\n\t\tAll assertions passed...\n";
+}
+
+enum CRYPTO { ENCRYPT, DECRYPT };
+
+std::vector<unsigned char> test_ecb_128_crypto_vector(const std::vector<unsigned char>& cipher,
+                                 const std::vector<unsigned char>& key, CRYPTO action) {
+    AES aes(AESKeyLength::AES_128);
+
+    return action == ENCRYPT ? aes.EncryptECB(cipher, key) : aes.DecryptECB(cipher, key);
+}
+
+std::vector<unsigned char> test_ecb_128_crypto_string(const std::string& cipher, 
+                                                       const std::string& key,
+                                                       CRYPTO action) {
+    std::vector<unsigned char> vcipher;
+    std::vector<unsigned char> vkey;
+
+    std::copy(cipher.begin(), cipher.end(), std::back_inserter(vcipher));
+    std::copy(key.begin(), key.end(), std::back_inserter(vkey));
+
+    return test_ecb_128_crypto_vector(vcipher, vkey, action);
+}
+
+std::vector<unsigned char> test_ecb_128_crypto(const std::string& input, 
+                         const std::string& key, CRYPTO action) {
+    std::vector<unsigned char> plain;
+
+    plain = test_ecb_128_crypto_string(input, key, action);
+
+    // std::cout << "\n\nSTART:'";
+    // for (unsigned char c : plain) { 
+    //     printf("%c", c);
+    // }
+    // std::cout << "'END\n\n";
+
+    return plain;
+}
+
+std::string pad_pkcs7_if_needed(const std::string& msg, unsigned int block_size, CRYPTO action) {
+    if (block_size < 2 || block_size > 255) { 
+        std::cerr << "block_size is: " << block_size << "\n";
+        throw new std::invalid_argument("pad_pkcs7_if_needed() block_size error\n"); 
+    }
+            // e.g., need to pad with seven extra values
+            // e.g., ..... 0x07 0x07 0x07 0x07 0x07 0x07 0x07
+    unsigned int n = msg.size();
+    unsigned int nblocks = (n / block_size);
+    std::string result;
+
+    // std::cout << "n is: " << n << ", block_size is: " << block_size << "\n";
+    // std::cout << "msg.size() is: " << msg.size() << "\n";
+
+    if (action == ENCRYPT) { 
+        std::string padding;
+        n = block_size - (msg.size() % block_size);
+        unsigned char c = (char)n;
+        for (unsigned int i = 0; i < n; ++i) { padding += c; }
+        result = msg + padding;
+    } else if (action == DECRYPT) { 
+        unsigned int npad = msg[n - 1];
+        // std::cout << "npad is: " << npad << "\n";
+        result = msg;
+                // confirm padding -- last values must be all the same 
+        for (int i = (int)n - 1, j = (int)npad; j > 0; --i, --j) { 
+            // printf("confirming... npad is: 0x%2d ", msg[i]);
+            result.pop_back();
+            if (npad != msg[i]) { throw new std::logic_error("padding incorrect in test_pad_pkcs7\n"); }
+        } 
+    }
+    return result;
+}
+
+
+std::vector<unsigned char> test_cbc_128_crypto_vector(
+                                 const std::vector<unsigned char>& cipher,
+                                 const std::vector<unsigned char>& key, 
+                                 const std::vector<unsigned char> prev, 
+                                 CRYPTO action) {
+    // std::cout << "\t" << __FUNCTION__ << "\n";
+    AES aes(AESKeyLength::AES_128);
+
+    return action == ENCRYPT ? aes.EncryptCBC(cipher, key, prev) : aes.DecryptCBC(cipher, key, prev);
+}
+
+
+// std::vector<unsigned char> test_cbc_128_crypto_string(const std::string& cipher, 
+//                                                        const std::string& key,
+//                                                        CRYPTO action) {
+    // AES aes(AESKeyLength::AES_128);
+
+std::vector<unsigned char> plain;
+
+
+std::vector<unsigned char> test_cbc_128_crypto(const std::string& input, const std::string& key, CRYPTO action) {
+
+    std::vector<unsigned char> current_block, plain_block, prev_block(16), iv(16), vkey;
+
+    AES aes(AESKeyLength::AES_128);
+    unsigned int block_size = aes.blockBytesLen;
+    unsigned int nblocks = input.size() / block_size;
+
+    iv.clear();
+    prev_block.clear();
+    for (int i = 0; i < 16; ++i) { 
+        iv.push_back(0);
+        prev_block.push_back(0);
+    }
+    std::copy(key.begin(), key.end(), std::back_inserter(vkey));
+
+    for (unsigned int i = 0; i < nblocks; ++i) { 
+        current_block.clear();
+        plain_block.clear();
+
+        std::string sblock = input.substr(i * block_size, block_size);
+        std::copy(sblock.begin(), sblock.end(), std::back_inserter(current_block));
+
+        plain_block = (action == ENCRYPT ? aes.EncryptCBC(current_block, vkey, prev_block) 
+                                         : aes.DecryptCBC(current_block, vkey, prev_block));
+
+std::cout << i << "  =====   ";   
+for (unsigned char c : plain_block) { std::cout << c; }  std::cout << "\n";
+        if (action == DECRYPT) { 
+            std::copy(current_block.begin(), current_block.end(), prev_block.begin());
+        } 
+        else {
+            std::copy(plain_block.begin(), plain_block.end(), prev_block.begin());
+        }
+        std::copy(plain_block.begin(), plain_block.end(), std::back_inserter(plain));
+    }
+
+    // std::cout << "BEGIN...\n";
+    // for (unsigned char c : plain) { std::cout << c; } 
+    // std::cout << "\n";
+
+    return plain;
+}
+
+
+// int main(int argc, char *argv[]) {
+//     // run_AES_tests();
+
+//     std::string file_in("encoded_1_7.base64"); 
+//     std::string key("YELLOW SUBMARINE");
+//     test_ecb_128_crypto_file(file_in, key, DECRYPT);       
+
+//     return 0;
+// }
+
+
+bool ecb_mode_detected(const std::string& cypher, unsigned int block_size) { 
+    std::set<std::string> blocks;       // detect duplicate blocks
+    unsigned int nblocks = cypher.size() / block_size;
+
+    for (unsigned int i = 0; i < cypher.size(); i += block_size) { 
+        std::string block = cypher.substr(i, block_size);
+
+        auto insertion = blocks.insert(block);
+        if (!insertion.second) { return true; }
+        std::cout << "Block " << i / block_size << " inserted\n";
+    }
+
+    std::cout << "total blocks: " << nblocks << "\n\n";
+    return false;
+}
